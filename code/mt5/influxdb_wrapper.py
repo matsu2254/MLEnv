@@ -4,7 +4,7 @@ import pandas as pd
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-class db_call:
+class influxdb_wrapper:
     def __init__(self,url :str,token : str,bucket :str,org : str,write_opt=SYNCHRONOUS):
 
         self.url=url

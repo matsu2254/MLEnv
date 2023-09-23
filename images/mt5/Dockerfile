@@ -16,8 +16,10 @@ RUN dpkg --add-architecture i386 && \
     apt-get -y full-upgrade && apt-get clean && rm -rf /var/lib/apt/lists/*
 ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-ENV WINEPREFIX /root/prefix32
-ENV WINEARCH win32
+ADD ./DOT_WINE /root/prefix64
+
+ENV WINEPREFIX /root/prefix64
+ENV WINEARCH win64
 ENV DISPLAY :0
 
 WORKDIR /root/
