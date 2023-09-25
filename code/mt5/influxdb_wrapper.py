@@ -7,11 +7,11 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 class influxdb_wrapper:
     def __init__(self,url :str,token : str,bucket :str,org : str,write_opt=SYNCHRONOUS):
 
-        self.url=url
-        self.token=token
-        self.bucket=bucket
-        self.org=org
-        self.write_opt=write_opt
+        self.url        = url
+        self.token      = token
+        self.bucket     = bucket
+        self.org        = org
+        self.write_opt  = write_opt
         #TODO
         # bucketなかったら作る
 

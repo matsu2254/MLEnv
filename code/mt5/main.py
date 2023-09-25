@@ -1,7 +1,9 @@
 import datetime
-from time import sleep
 import schedule
+import threading
+from time import sleep
 from dateutil import tz
+
 
 import MetaTrader5 as mt5
 
@@ -13,68 +15,121 @@ import mt5_wrapper
 # 認証
 
 
-TOKEN = '78mdMPrH02UaKsrsb6Q2Ofj0neRVfRNDaFfrN2RWqreobbh3RtP7jyKX9-Ktvt-JBAthd1FPnZggkRANHi9T8w=='
-ORG = "influxdata"
-BUCKET = "test"
-URL = "http://192.168.0.15"
-SYMBOL = "EURJPY"
-TF=mt5.TIMEFRAME_H4
-REP=20
-BAR_OR_TICK="Tick"
+settings = {   
+        CONFIG:{
+            INFLUXDB_TOKEN: '78mdMPrH02UaKsrsb6Q2Ofj0neRVfRNDaFfrN2RWqreobbh3RtP7jyKX9-Ktvt-JBAthd1FPnZggkRANHi9T8w==',
+            INFLUXDB_URL: "http://192.168.0.15",
+            INFKUXDB_ORG: "influxdata",
+            INFLUXDB_TAG: "timeframe",
 
-start=datetime.datetime.now(tz=tz.gettz('Asia/Tokyo'))-datetime.timedelta(hours=1)
+        },
+        GETDATA:[
+            {
+                SYMBOL: "USDJPY",
+                TIMEFRAME: mt5.TIMEFRAME_H4,
+                REPEAT: 20
+            },
+            {
+                SYMBOL: "AUDJPY",
+                TIMEFRAME: "Tickers",
+                REPEAT: 20
 
-h=influxdb_wrapper(
-                url=URL,
-                token=TOKEN,
-                org=ORG,
-                bucket=BUCKET
-                )
-
-#print(h.get_last_time("GBPJPY"))
-#print(h.get_dataframe(measurement="GBPJPY",data_type="ohlc",start="2022-12-01",stop="2023-01-01"))
-
-#h.write_dataframe(data=bars,mj="USDJPY",tag="Smybol")
-
-h.write_dataframe(data=mt5_wrapper.get_ticks(symbol=SYMBOL,start=start),
-                  measurement=SYMBOL,
-                  tag="Smybol"
-                  )
+            },
+        ]
+     }
 
 
-def upload_task():
-    #TODO Symbol を時系＋Symbolにする
+# TOKEN = '78mdMPrH02UaKsrsb6Q2Ofj0neRVfRNDaFfrN2RWqreobbh3RtP7jyKX9-Ktvt-JBAthd1FPnZggkRANHi9T8w=='
+# ORG = "influxdata"
+# BUCKET = "test"
+# URL = "http://192.168.0.15"
+# SYMBOL = "EURJPY"
+# TF=mt5.TIMEFRAME_H4
+# REP=20
+# BAR_OR_TICK="Tick"
 
-    SYM=SYMBOL
-    TIMEFRAME=TF
-    last=None
-    ticks=None
-    #try:
-    last=h.get_last_time(measurement=SYMBOL)
-    #except Exception as e:
-    #    print("except get lasttime")
- #       raise e
+def upload_task(infwrap :influxdb_wrapper,mt5wrap :mt5_wrapper,data :dict):
+        #TODO Symbol を時系＋Symbolにする
+        
+        print("execute task")
+        
+        symbol      = data["SYMBOL"]
+        tag         = data["TAG"]
+        timeframe   = data["TIMEFRAME"]
+        last        = None
+        ticks       = None
 
-    print("execute task")
+        last        = infwrap.get_last_time(measurement=symbol)
 
-    if not last:
-        last=datetime.datetime.now(tz=tz.gettz('Asia/Tokyo'))-datetime.timedelta(minutes=1)
+        if not last:
+            last = datetime.datetime.now(tz=tz.gettz('Asia/Tokyo'))-datetime.timedelta(minutes=1)
 
-    print(last)
+        print(last)
 
-    if BAR_OR_TICK == "Tick":
-        ticks = mt5_wrapper.get_ticks(symbol=SYMBOL,start=last)
-        print(ticks)
-        h.write_dataframe(data=ticks,measurement=SYMBOL,tag="Smybol")
+        if str(timeframe) == "Tick":
+            ticks = mt5wrap.get_ticks(
+                            symbol  = symbol,
+                            start   = last,
+                            )
+            print(ticks)
+            
+            infwrap.write_dataframe(
+                            data        = ticks,
+                            measurement = symbol,
+                            tag         = tag,
+                            )
 
-    elif BAR_OR_TICK == "Bar":
-        bars = mt5_wrapper.get_bars(symbol=SYMBOL,tf=TF,start=start)
-        print(bars)
-        h.write_dataframe(data=bars,mj=SYMBOL,tag="Symbol")
+        else:
+            bars = mt5wrap.get_bars(
+                            symbol  = symbol,
+                            tf      = timeframe,
+                            start   = last,
+                            )
+            print(bars)
+
+            infwrap.write_dataframe(
+                            data    = bars,
+                            mj      = symbol,
+                            tag     = tag,
+                            )
+
+def make_thread(infwrap :influxdb_wrapper,mt5wrap :mt5_wrapper,data :dict):
+    jt = threading.Thread(target=upload_task,args=(infwrap,mt5wrap,data))
+    jt.start()
+    
+
+def main():
+    start = datetime.datetime.now(tz=tz.gettz('Asia/Tokyo'))-datetime.timedelta(hours=1)
+    config = settings['CONFIG']
+
+    mt5wrap = mt5_wrapper()
+
+    infwrap = influxdb_wrapper(
+                    url     =  config['INFLUXDB_URL'],
+                    token   =  config['INFLUXDB_TOKEN'],
+                    org     =  config['INFLUXDB_ORG'],
+                    bucket  =  config['INFLUXDB_BUCKET'],
+                    )
+
+    #print(h.get_last_time("GBPJPY"))
+    #print(h.get_dataframe(measurement="GBPJPY",data_type="ohlc",start="2022-12-01",stop="2023-01-01"))
+    #h.write_dataframe(data=bars,mj="USDJPY",tag="Smybol")
+
+    # prewrite
+    # infwrap.write_dataframe(
+    #                 data=mt5_wrapper.get_ticks(symbol=SYMBOL,start=start),
+    #                 measurement=SYMBOL,
+    #                 tag="Smybol"
+    #                 )
 
 
-schedule.every(REP).seconds.do(upload_task)
+    
+    for d in settings['GET_DATA']: 
+        schedule.every(d['REPEAT']).seconds.do(make_thread,infwrap=infwrap,mt5wrap=mt5wrap,data=d)
 
-while True:
-	schedule.run_pending()
-	sleep(1)
+    while True:
+        schedule.run_pending()
+        sleep(1)
+
+if __name__ == "__main__":
+    main()
