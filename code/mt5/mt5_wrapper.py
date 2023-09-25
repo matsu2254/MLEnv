@@ -59,6 +59,7 @@ class mt5_wrapper:
             raise Exception
       finally:
          mt5.shutdown()
+
       bars['time'] = pd.to_datetime(bars['time'],unit='s',origin='unix')
       bars = bars.set_index('time')
       bars.columns = ['Open','High','Low','Close','Tick_olume','Spread','Real_volume']

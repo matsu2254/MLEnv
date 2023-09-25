@@ -15,6 +15,7 @@ class influxdb_wrapper:
         #TODO
         # bucketなかったら作る
 
+#TODO add tag
     def get_last_time(self,measurement :str) -> datetime:
         #TODO: エラーハンドリング、
         # queryの実行　DB呼び出し
@@ -36,7 +37,7 @@ class influxdb_wrapper:
                 return None
             
             return last[0].records[0].get_time()
-    
+#TODO add tag
     def get_dataframe(self,measurement :str, data_type :str, start, stop) -> pd.DataFrame:
         with InfluxDBClient(url=self.url, token=self.token, org=self.org) as client:
             

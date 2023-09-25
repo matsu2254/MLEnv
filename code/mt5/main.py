@@ -8,30 +8,34 @@ from dateutil import tz
 import MetaTrader5 as mt5
 
 from influxdb_wrapper import influxdb_wrapper
-import mt5_wrapper
+from mt5_wrapper import mt5_wrapper
 
 # TODO
 # 設定ファイルからのロード
 # 認証
 
+# TODO
+# add tag to influxd func
 
-settings = {   
+settings = {
         'CONFIG':{
             'INFLUXDB_TOKEN': "78mdMPrH02UaKsrsb6Q2Ofj0neRVfRNDaFfrN2RWqreobbh3RtP7jyKX9-Ktvt-JBAthd1FPnZggkRANHi9T8w==",
             'INFLUXDB_URL': "http://192.168.0.15",
-            'INFKUXDB_ORG': "influxdata",
-            'INFLUXDB_TAG': "timeframe",
+            'INFLUXDB_ORG': "influxdata",
+            'INFLUXDB_BUCKET': "test",
 
         },
         'GETDATA':[
             {
                 'SYMBOL': "USDJPY",
                 'TIMEFRAME': mt5.TIMEFRAME_H4,
+                'TAG': "Timeframe",
                 'REPEAT': 20
             },
             {
                 'SYMBOL': "AUDJPY",
-                'TIMEFRAME': "Tickers",
+                'TIMEFRAME': "Tick",
+                'TAG': "Timeframe",
                 'REPEAT': 20
 
             },
@@ -79,7 +83,7 @@ def upload_task(infwrap :influxdb_wrapper,mt5wrap :mt5_wrapper,data :dict):
                             tag         = tag,
                             )
 
-        else:
+        elif isinstance(timeframe,int):
             bars = mt5wrap.get_bars(
                             symbol  = symbol,
                             tf      = timeframe,
@@ -88,10 +92,12 @@ def upload_task(infwrap :influxdb_wrapper,mt5wrap :mt5_wrapper,data :dict):
             print(bars)
 
             infwrap.write_dataframe(
-                            data    = bars,
-                            mj      = symbol,
-                            tag     = tag,
+                            data        = bars,
+                            measurement = symbol,
+                            tag         = tag,
                             )
+        else:
+            pass
 
 def make_thread(infwrap :influxdb_wrapper,mt5wrap :mt5_wrapper,data :dict):
     jt = threading.Thread(target=upload_task,args=(infwrap,mt5wrap,data))
@@ -124,7 +130,7 @@ def main():
 
 
     
-    for d in settings['GET_DATA']: 
+    for d in settings['GETDATA']: 
         schedule.every(d['REPEAT']).seconds.do(make_thread,infwrap=infwrap,mt5wrap=mt5wrap,data=d)
 
     while True:
