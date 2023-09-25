@@ -16,23 +16,23 @@ import mt5_wrapper
 
 
 settings = {   
-        CONFIG:{
-            INFLUXDB_TOKEN: '78mdMPrH02UaKsrsb6Q2Ofj0neRVfRNDaFfrN2RWqreobbh3RtP7jyKX9-Ktvt-JBAthd1FPnZggkRANHi9T8w==',
-            INFLUXDB_URL: "http://192.168.0.15",
-            INFKUXDB_ORG: "influxdata",
-            INFLUXDB_TAG: "timeframe",
+        'CONFIG':{
+            'INFLUXDB_TOKEN': "78mdMPrH02UaKsrsb6Q2Ofj0neRVfRNDaFfrN2RWqreobbh3RtP7jyKX9-Ktvt-JBAthd1FPnZggkRANHi9T8w==",
+            'INFLUXDB_URL': "http://192.168.0.15",
+            'INFKUXDB_ORG': "influxdata",
+            'INFLUXDB_TAG': "timeframe",
 
         },
-        GETDATA:[
+        'GETDATA':[
             {
-                SYMBOL: "USDJPY",
-                TIMEFRAME: mt5.TIMEFRAME_H4,
-                REPEAT: 20
+                'SYMBOL': "USDJPY",
+                'TIMEFRAME': mt5.TIMEFRAME_H4,
+                'REPEAT': 20
             },
             {
-                SYMBOL: "AUDJPY",
-                TIMEFRAME: "Tickers",
-                REPEAT: 20
+                'SYMBOL': "AUDJPY",
+                'TIMEFRAME': "Tickers",
+                'REPEAT': 20
 
             },
         ]
