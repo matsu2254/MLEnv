@@ -11,6 +11,11 @@ def get_varname(var):
          return k
    return None
 
+def get_varofname(name):
+   for k,v in vars(mt5).items():
+      if name in k:
+         return v
+
 class mt5_wrapper:
    def __init__(self) -> None:
       # TODO auth infomation ?
