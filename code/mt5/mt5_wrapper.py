@@ -5,21 +5,22 @@ import pandas as pd
 import MetaTrader5 as mt5
 from dateutil import tz
 
-def get_varname(var):
-   for k, v in vars(mt5).items():
-      if var == v:
-         return k
-   return None
-
-def get_varofname(name):
-   for k,v in vars(mt5).items():
-      if name in k:
-         return v
 
 class mt5_wrapper:
    def __init__(self) -> None:
       # TODO auth infomation ?
       pass
+
+   def get_varname(self,var):
+      for k, v in vars(mt5).items():
+         if var == v:
+            return k
+      return None
+
+   def get_varofname(self,name):
+      for k,v in vars(mt5).items():
+         if name in k:
+            return v
 
    def get_ticks(self,symbol: str,start :datetime) -> pd.DataFrame:
       if not mt5.initialize():
@@ -68,6 +69,6 @@ class mt5_wrapper:
       bars['time'] = pd.to_datetime(bars['time'],unit='s',origin='unix')
       bars = bars.set_index('time')
       bars.columns = ['Open','High','Low','Close','Tick_olume','Spread','Real_volume']
-      bars['Timeframe']=get_varname(tf)
+      bars['Timeframe']=self.get_varname(tf)
       return bars
 

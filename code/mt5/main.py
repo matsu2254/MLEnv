@@ -73,6 +73,7 @@ from mt5_wrapper import mt5_wrapper
 
 
 def main(settings :dict) -> None:
+    print(settings)
     config = settings['CONFIG']
 
     mt5wrap = mt5_wrapper()
@@ -122,8 +123,8 @@ def upload_task(infwrap :influxdb_wrapper,mt5wrap :mt5_wrapper,data :dict) -> No
                     start   = last,
                     )
 
-    elif isinstance(mt5wrap.get_varofname(str(timeframe)),int):
-        timeframe = mt5wrap.get_varofname(str(timeframe))
+    elif isinstance(mt5wrap.get_varofname(name=str(timeframe)),int):
+        timeframe = mt5wrap.get_varofname(name=str(timeframe))
         output = mt5wrap.get_bars(
                     symbol  = symbol,
                     tf      = timeframe,
@@ -142,7 +143,7 @@ def upload_task(infwrap :influxdb_wrapper,mt5wrap :mt5_wrapper,data :dict) -> No
     
     print(output)
 
-    if output:
+    if len(output) != 0:
         infwrap.write_dataframe(
                         data        = output,
                         measurement = symbol,
@@ -167,7 +168,7 @@ if __name__ == "__main__":
         print(e, file=sys.stderr)
         sys.exit(1)
     
-    if settings['kind'] != "mt5_uploader_config" or settings[''] != "v0.1":
-        settings = settings['data']
-        
-    main(settings=settings)
+    if settings['kind'] != "mt5_uploader_config" or settings['apiVersion'] != "v0.1":
+        print('kind or version error')
+        exit(1)
+    main(settings=settings['data'])
