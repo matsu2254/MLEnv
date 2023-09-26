@@ -20,57 +20,6 @@ from mt5_wrapper import mt5_wrapper
 # TODO 
 # log
 
-#TODO
-# 設定を分離
-
-# TIMEFRAME_M1   1
-# TIMEFRAME_M2   2
-# TIMEFRAME_M3   3
-# TIMEFRAME_M4   4
-# TIMEFRAME_M5   5
-# TIMEFRAME_M6   6
-# TIMEFRAME_M10   10
-# TIMEFRAME_M12   12
-# TIMEFRAME_M15   15
-# TIMEFRAME_M20   20
-# TIMEFRAME_M30   30
-# TIMEFRAME_H1   16385
-# TIMEFRAME_H2   16386
-# TIMEFRAME_H4   16388
-# TIMEFRAME_H3   16387
-# TIMEFRAME_H6   16390
-# TIMEFRAME_H8   16392
-# TIMEFRAME_H12   16396
-# TIMEFRAME_D1   16408
-# TIMEFRAME_W1   32769
-# TIMEFRAME_MN1   49153
-
-# settings = {
-#         'CONFIG':{
-#             'INFLUXDB_TOKEN': "78mdMPrH02UaKsrsb6Q2Ofj0neRVfRNDaFfrN2RWqreobbh3RtP7jyKX9-Ktvt-JBAthd1FPnZggkRANHi9T8w==",
-#             'INFLUXDB_URL': "http://192.168.0.15",
-#             'INFLUXDB_ORG': "influxdata",
-#             'INFLUXDB_BUCKET': "test",
-
-#         },
-#         'GETDATA':[
-#             {
-#                 'SYMBOL': "USDJPY",
-#                 'TIMEFRAME': "TIMEFRAME_H4",
-#                 'TAG': "Timeframe",
-#                 'REPEAT': 20
-#             },
-#             {
-#                 'SYMBOL': "AUDJPY",
-#                 'TIMEFRAME': "Tick",
-#                 'TAG': "Timeframe",
-#                 'REPEAT': 20
-
-#             },
-#         ]
-#      }
-
-
 
 def main(settings :dict) -> None:
     print(settings)
