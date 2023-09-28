@@ -1,0 +1,93 @@
+@startuml
+
+skinparam linetype ortho
+'skinparam linetype polyline
+
+' Kubernetes
+!define KubernetesPuml https://raw.githubusercontent.com/dcasati/kubernetes-PlantUML/master/dist
+
+' global definition
+!includeurl KubernetesPuml/kubernetes_Common.puml
+!includeurl KubernetesPuml/kubernetes_Context.puml
+!includeurl KubernetesPuml/kubernetes_Simplified.puml
+
+' k8s specific components
+!includeurl KubernetesPuml/OSS/KubernetesPod.puml
+!includeurl KubernetesPuml/OSS/KubernetesRs.puml
+!includeurl KubernetesPuml/OSS/KubernetesPsp.puml
+!includeurl KubernetesPuml/OSS/KubernetesPv.puml
+!includeurl KubernetesPuml/OSS/KubernetesPvc.puml
+
+actor "user" as user
+
+package windows?{
+    usecase "MetaTrader5" as mt5
+
+}
+
+
+Cluster_Boundary(cluster, "k8s"){
+    Namespace_Boundary(ns, "influxdb") {
+        KubernetesPod(influxdb,"influxdb","")
+    }
+    Namespace_Boundary(ns2, "forecast") {
+        KubernetesPod(model_maker,"(4 Hour)","")
+        KubernetesPod(forecaster,"(4 Hour)","")
+        KubernetesPod(model_maker2,"(Day)","")
+        KubernetesPod(forecaster2,"(Day)","")
+        ' KubernetesRs(modelrs,"model_maker","")
+        ' KubernetesRs(forecastrs,"forecaster","")
+    }
+    Namespace_Boundary(ns3,"ML"){
+        KubernetesPod(ml,"ML type 1","")
+        KubernetesPod(ml2,"ML type 2", "")
+        ' KubernetesRs(mlrs,"ML base helm","")
+    }
+    Namespace_Boundary(monitoring,"monitoring"){
+        KubernetesPod(grafana,"grafana","")
+    }
+}
+Rel(influxdb,grafana," ")
+
+Rel(influxdb,model_maker," ")
+Rel(influxdb,forecaster," ")
+
+Rel_L(model_maker,forecaster,"model")
+Rel(influxdb,model_maker2," ")
+Rel(influxdb,forecaster2," ")
+Rel_L(model_maker2,forecaster2,"model")
+
+Rel_U(forecaster,influxdb,"Upload")
+Rel_U(forecaster2,influxdb,"Upload")
+
+Rel(influxdb,ml," ")
+Rel(influxdb,ml2," ")
+
+' Rel_U(mlrs,ml," ")
+' Rel_U(mlrs,ml2," ")
+
+Rel_R(ml,user,"notify")
+Rel_R(ml2,user,"notfiy")
+
+Rel_U(ml,mt5,"signal")
+Rel_U(ml2,mt5,"signal")
+
+Rel_R(grafana,user,"visualization")
+Rel(mt5,user," ")
+
+' Rel_U(modelrs,model_maker," ")
+' Rel_U(modelrs,model_maker2," ")
+
+' Rel_U(forecastrs,forecaster," ")
+' Rel_U(forecastrs,forecaster2," ")
+
+Rel_R(mt5,influxdb,"data source")
+
+
+
+'package other_datasource{
+'    usecase "other data source" as od
+'}
+'Rel_R(od,influxdb," ")
+
+@enduml
