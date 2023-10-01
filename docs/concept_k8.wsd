@@ -31,16 +31,16 @@ Cluster_Boundary(cluster, "k8s"){
         KubernetesPod(influxdb,"influxdb","")
     }
     Namespace_Boundary(ns2, "forecast") {
-        KubernetesPod(model_maker,"(4 Hour)","")
-        KubernetesPod(forecaster,"(4 Hour)","")
-        KubernetesPod(model_maker2,"(Day)","")
-        KubernetesPod(forecaster2,"(Day)","")
+        KubernetesPod(model_maker,"モデル作成\n(4 Hour)","")
+        KubernetesPod(forecaster,"予測\n(4 Hour)","")
+        KubernetesPod(model_maker2,"モデル作成\n(Day)","")
+        KubernetesPod(forecaster2,"予測\n(Day)","")
         ' KubernetesRs(modelrs,"model_maker","")
         ' KubernetesRs(forecastrs,"forecaster","")
     }
     Namespace_Boundary(ns3,"ML"){
-        KubernetesPod(ml,"ML type 1","")
-        KubernetesPod(ml2,"ML type 2", "")
+        KubernetesPod(ml,"強化学習\ntype 1","")
+        KubernetesPod(ml2,"強化学習\ntype 2", "")
         ' KubernetesRs(mlrs,"ML base helm","")
     }
     Namespace_Boundary(monitoring,"monitoring"){
@@ -66,14 +66,21 @@ Rel(influxdb,ml2," ")
 ' Rel_U(mlrs,ml," ")
 ' Rel_U(mlrs,ml2," ")
 
-Rel_R(ml,user,"notify")
-Rel_R(ml2,user,"notfiy")
+'Rel_R(ml,user,"notify")
+'Rel_R(ml2,user,"notfiy")
 
-Rel_U(ml,mt5,"signal")
-Rel_U(ml2,mt5,"signal")
+Rel(ml,mt5,"signal")
+Rel(ml2,mt5,"signal")
 
-Rel_R(grafana,user,"visualization")
-Rel(mt5,user," ")
+'Rel_R(grafana,user,"visualization")
+
+
+mt5 --> user
+grafana -d-> user : 可視化
+ml -r-> user      : 通知
+ml2 -r-> user     : 通知
+
+'Rel(mt5,user," ")
 
 ' Rel_U(modelrs,model_maker," ")
 ' Rel_U(modelrs,model_maker2," ")
@@ -81,7 +88,7 @@ Rel(mt5,user," ")
 ' Rel_U(forecastrs,forecaster," ")
 ' Rel_U(forecastrs,forecaster2," ")
 
-Rel_R(mt5,influxdb,"data source")
+Rel(mt5,influxdb,"source")
 
 
 
