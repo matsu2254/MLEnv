@@ -4,19 +4,32 @@ import pandas as pd
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
+
+#   |> filter(fn: (r) => r["Timeframe"] == "Tick")
+
+
 class influxdb_wrapper:
     def __init__(self,url :str,token : str,bucket :str,org : str,write_opt=SYNCHRONOUS):
 
-        self.url        = url
-        self.token      = token
-        self.bucket     = bucket
-        self.org        = org
-        self.write_opt  = write_opt
+        self.url        = url           # 
+        self.token      = token         # 
+        self.bucket     = bucket        # 
+        self.org        = org           # 
+        self.write_opt  = write_opt     # 
         #TODO
         # bucketなかったら作る
 
 #TODO add tag
-    def get_last_time(self,measurement :str) -> datetime:
+    def get_last_time(self, measurement :str, timeframe :str) -> datetime:
+        """その銘柄・通貨ペアの最後のデータからタイムスタンプを取得する
+        Args:
+            measurement : str 銘柄・通貨ペア
+            timeframe   : str 時間足・MT５の変数名
+        Returns:
+            datetime    : 指定の組み合わせの最後のデータからタイムスタンプ
+        Raises:
+        Note:
+        """
         #TODO: エラーハンドリング、
         # queryの実行　DB呼び出し
         # GBPJPYの末尾をとるクエリ
@@ -28,6 +41,7 @@ class influxdb_wrapper:
                     query=f'from(bucket: "{self.bucket}") \
                             |> range(start: 1) \
                             |> filter(fn: (r) => r["_measurement"] == "{measurement}") \
+                            |> filter(fn: (r) => r["Timeframe"] == "{timeframe}") \
                             |> tail(n:1) \
                             |> pivot(rowKey:["_time"],columnKey:["_field"],valueColumn:"_value")'
                     )
@@ -37,8 +51,20 @@ class influxdb_wrapper:
                 return None
             
             return last[0].records[0].get_time()
-#TODO add tag
-    def get_dataframe(self,measurement :str, data_type :str, start, stop) -> pd.DataFrame:
+
+    def get_dataframe(self,measurement :str, timeframe :str, data_type :str, start, stop) -> pd.DataFrame:
+        """influxdbからデータを取得する
+        Args:
+            measurement  : str 銘柄・通貨ペア
+            timeframe    : str 時間足・MT５の変数名
+            data_type    : "tick" or "ohlc"
+            start        : スタート時間
+            stop         : ストップ時間
+        Returns:
+            pd.DataFrame :
+        Raises:
+        Notes:
+        """
         with InfluxDBClient(url=self.url, token=self.token, org=self.org) as client:
             
             if data_type == "ohlc":
@@ -57,6 +83,7 @@ class influxdb_wrapper:
                             f'from(bucket:"{self.bucket}") '
                             f'|> range(start: {start}, stop:{stop}) '
                             f'|> filter(fn: (r) => r["_measurement"] == "{measurement}")'
+                            f'|> filter(fn: (r) => r["Timeframe"] == "{timeframe}")'
                             '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value") '
                             f'|> keep(columns: {keep})'
                            )
@@ -74,7 +101,18 @@ class influxdb_wrapper:
 
             return return_data.drop(['result','table'],axis=1).dropna().set_index('_time')
 
-    def write_dataframe(self,data :pd.DataFrame, measurement :str, tag :str) -> bool:    
+    def write_dataframe(self,data :pd.DataFrame, measurement :str, tag :str) -> bool:
+        """influxdbにデータを書き込む
+        Args:
+            data        : pd.Dataframe 書き込むデータ
+            measurement : 通貨ペア・銘柄名
+            tag         : influxdbのタグ
+        Returns:
+            TODO
+        Raises:
+        Notes:
+            influxdbのタグはほぼ”Timeframe”で決め打ち
+        """    
         with InfluxDBClient(url=self.url, token=self.token, org=self.org)as client:
             write_api = client.write_api(write_options=SYNCHRONOUS)
             write_api.write(
