@@ -1,0 +1,29 @@
+@startuml
+
+left to right direction
+
+
+package k8s{
+    usecase "influxdb"  as influxdb
+    usecase "forecast" as forecast
+    usecase "grafana" as grafana
+    usecase "reinforcement \nlearning" as rl
+}
+package windows{
+    usecase "Metatrader5" as mt5
+}
+
+actor "user" as us
+
+
+mt5         --> influxdb  : upload forex data
+forecast    <-> influxdb  :make a forecast
+rl          <-> influxdb
+rl          --> mt5       : plot indicator
+influxdb    --> grafana
+grafana     --> us        : data visualize
+
+
+
+@enduml
+
