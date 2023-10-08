@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: sftp
+  name: sftp-storage-pvc
+spec:
+  resources:
+    requests:
+      storage: 20G
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce

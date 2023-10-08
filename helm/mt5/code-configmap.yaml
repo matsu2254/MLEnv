@@ -1,0 +1,216 @@
+kind: ConfigMap
+metadata:
+  name: code-configmap
+  namespace: mt5
+apiVersion: v1
+binaryData:
+  requestment.txt: //5jAGUAcgB0AGkAZgBpAD0APQAyADAAMgAzAC4ANwAuADIAMgANAAoAZABhAHQAZQB1AHQAaQBsAHMAPQA9ADAALgA2AC4AMQAyAA0ACgBpAG4AZgBsAHUAeABkAGIALQBjAGwAaQBlAG4AdAA9AD0AMQAuADMANwAuADAADQAKAE0AZQB0AGEAVAByAGEAZABlAHIANQA9AD0ANQAuADAALgA0ADUADQAKAG4AdQBtAHAAeQA9AD0AMQAuADIANgAuADAADQAKAHAAYQBuAGQAYQBzAD0APQAyAC4AMQAuADEADQAKAHAAeQB0AGgAbwBuAC0AZABhAHQAZQB1AHQAaQBsAD0APQAyAC4AOAAuADIADQAKAHAAeQB0AHoAPQA9ADIAMAAyADMALgAzAC4AcABvAHMAdAAxAA0ACgByAGUAYQBjAHQAaQB2AGUAeAA9AD0ANAAuADAALgA0AA0ACgBzAGMAaABlAGQAdQBsAGUAPQA9ADEALgAyAC4AMAANAAoAcwBpAHgAPQA9ADEALgAxADYALgAwAA0ACgB0AHkAcABpAG4AZwBfAGUAeAB0AGUAbgBzAGkAbwBuAHMAPQA9ADQALgA4AC4AMAANAAoAdAB6AGQAYQB0AGEAPQA9ADIAMAAyADMALgAzAA0ACgB1AHIAbABsAGkAYgAzAD0APQAyAC4AMAAuADUADQAKAA==
+data:
+  .gitignore: |
+    __pycache__/
+  config.yaml: |
+    # TIMEFRAME_M1   1
+    # TIMEFRAME_M2   2
+    # TIMEFRAME_M3   3
+    # TIMEFRAME_M4   4
+    # TIMEFRAME_M5   5
+    # TIMEFRAME_M6   6
+    # TIMEFRAME_M10   10
+    # TIMEFRAME_M12   12
+    # TIMEFRAME_M15   15
+    # TIMEFRAME_M20   20
+    # TIMEFRAME_M30   30
+    # TIMEFRAME_H1   16385
+    # TIMEFRAME_H2   16386
+    # TIMEFRAME_H4   16388
+    # TIMEFRAME_H3   16387
+    # TIMEFRAME_H6   16390
+    # TIMEFRAME_H8   16392
+    # TIMEFRAME_H12   16396
+    # TIMEFRAME_D1   16408
+    # TIMEFRAME_W1   32769
+    # TIMEFRAME_MN1   49153
+
+    apiVersion: v0.1
+    kind: mt5_uploader_config
+    metadata:
+      name: config_for...
+    data:
+      CONFIG:
+        INFLUXDB_BUCKET: test
+        INFLUXDB_ORG: influxdata
+        INFLUXDB_TOKEN: 78mdMPrH02UaKsrsb6Q2Ofj0neRVfRNDaFfrN2RWqreobbh3RtP7jyKX9-Ktvt-JBAthd1FPnZggkRANHi9T8w==
+        INFLUXDB_URL: http://192.168.0.15
+      GETDATA:
+      - REPEAT: 200
+        SYMBOL: USDJPY
+        TAG: Timeframe
+        TIMEFRAME: TIMEFRAME_H4
+      - REPEAT: 20
+        SYMBOL: USDJPY
+        TAG: Timeframe
+        TIMEFRAME: TIMEFRAME_H1
+      - REPEAT: 20
+        SYMBOL: USDJPY
+        TAG: Timeframe
+        TIMEFRAME: TIMEFRAME_M1
+      - REPEAT: 20
+        SYMBOL: USDJPY
+        TAG: Timeframe
+        TIMEFRAME: Tick
+      - REPEAT: 20
+        SYMBOL: AUDJPY
+        TAG: Timeframe
+        TIMEFRAME: Tick
+  influxdb_wrapper.py: "from datetime import datetime\nimport pandas as pd\n\nfrom
+    influxdb_client import InfluxDBClient\nfrom influxdb_client.client.write_api import
+    SYNCHRONOUS\n\n\n#   |> filter(fn: (r) => r[\"Timeframe\"] == \"Tick\")\n\n\nclass
+    influxdb_wrapper:\n    def __init__(self,url :str,token : str,bucket :str,org
+    : str,write_opt=SYNCHRONOUS):\n\n        self.url        = url           # \n
+    \       self.token      = token         # \n        self.bucket     = bucket        #
+    \n        self.org        = org           # \n        self.write_opt  = write_opt
+    \    # \n        #TODO\n        # bucketなかったら作る\n\n#TODO add tag\n    def get_last_time(self,
+    measurement :str, timeframe :str) -> datetime:\n        \"\"\"その銘柄・通貨ペアの最後のデータからタイムスタンプを取得する\n
+    \       Args:\n            measurement : str 銘柄・通貨ペア\n            timeframe   :
+    str 時間足・MT５の変数名\n        Returns:\n            datetime    : 指定の組み合わせの最後のデータからタイムスタンプ\n
+    \       Raises:\n        Note:\n        \"\"\"\n        #TODO: エラーハンドリング、\n        #
+    queryの実行　DB呼び出し\n        # GBPJPYの末尾をとるクエリ\n        \n        with InfluxDBClient(url=self.url,
+    token=self.token, org=self.org) as client:\n            # ohlcそれぞれが一行になってしまうので結合\n
+    \           last = client.query_api().query(\n                    org=self.org,\n
+    \                   query=f'from(bucket: \"{self.bucket}\") \\\n                            |>
+    range(start: 1) \\\n                            |> filter(fn: (r) => r[\"_measurement\"]
+    == \"{measurement}\") \\\n                            |> filter(fn: (r) => r[\"Timeframe\"]
+    == \"{timeframe}\") \\\n                            |> tail(n:1) \\\n                            |>
+    pivot(rowKey:[\"_time\"],columnKey:[\"_field\"],valueColumn:\"_value\")'\n                    )\n
+    \           client.close()\n            \n            if len(last) <= 0:\n                return
+    None\n            \n            return last[0].records[0].get_time()\n\n    def
+    get_dataframe(self,measurement :str, timeframe :str, data_type :str, start, stop)
+    -> pd.DataFrame:\n        \"\"\"influxdbからデータを取得する\n        Args:\n            measurement
+    \ : str 銘柄・通貨ペア\n            timeframe    : str 時間足・MT５の変数名\n            data_type
+    \   : \"tick\" or \"ohlc\"\n            start        : スタート時間\n            stop
+    \        : ストップ時間\n        Returns:\n            pd.DataFrame :\n        Raises:\n
+    \       Notes:\n        \"\"\"\n        with InfluxDBClient(url=self.url, token=self.token,
+    org=self.org) as client:\n            \n            if data_type == \"ohlc\":\n
+    \               keep='[\"_time\",\"Ticker\",\"Open\",\"High\",\"Low\",\"Close\"]'\n
+    \           \n            elif data_type == \"tick\":\n                keep='[\"_time\",\"Ticker\",\"Bid\",\"Ask\"]'\n
+    \               \n            else:\n                return None\n            \n
+    \           query_api = client.query_api()\n            # TODO \n            #
+    start, stop　フォーマットを良い感じに\n            data_frames = query_api.query_data_frame(\n
+    \                           f'from(bucket:\"{self.bucket}\") '\n                            f'|>
+    range(start: {start}, stop:{stop}) '\n                            f'|> filter(fn:
+    (r) => r[\"_measurement\"] == \"{measurement}\")'\n                            f'|>
+    filter(fn: (r) => r[\"Timeframe\"] == \"{timeframe}\")'\n                            '|>
+    pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\") '\n
+    \                           f'|> keep(columns: {keep})'\n                           )\n\n
+    \           client.close()\n            \n            # 複数またがって取得した場合、dataframeのリストとして渡されるので、適当に結合する\n
+    \           if type(data_frames) is pd.DataFrame:\n                return_data=data_frames\n
+    \           \n            elif type(data_frames) is list:\n                return_data=None\n
+    \               for data_frame in data_frames:\n                        return_data
+    = pd.concat([return_data,data_frame])\n\n            return return_data.drop(['result','table'],axis=1).dropna().set_index('_time')\n\n
+    \   def write_dataframe(self,data :pd.DataFrame, measurement :str, tag :str) ->
+    bool:\n        \"\"\"influxdbにデータを書き込む\n        Args:\n            data        :
+    pd.Dataframe 書き込むデータ\n            measurement : 通貨ペア・銘柄名\n            tag         :
+    influxdbのタグ\n        Returns:\n            TODO\n        Raises:\n        Notes:\n
+    \           influxdbのタグはほぼ”Timeframe”で決め打ち\n        \"\"\"    \n        with InfluxDBClient(url=self.url,
+    token=self.token, org=self.org)as client:\n            write_api = client.write_api(write_options=SYNCHRONOUS)\n
+    \           write_api.write(\n                    self.bucket,\n                    self.org,\n
+    \                   record=data, # dataframe\n                    data_frame_measurement_name=measurement,
+    # インデックス名相当？\n                    data_frame_tag_columns=[tag] # tagが必要?\n                   )\n
+    \           client.close()\n\n    def check_bucket(self,name) -> bool:\n        #TODO
+    ?\n        pass\n\n    def create_bucket(self,name) -> bool:\n        #TODO ?\n
+    \       pass\n\n"
+  main.py: "import sys\nimport yaml\nimport datetime\nimport schedule\nimport threading\nfrom
+    time import sleep\nfrom dateutil import tz\n\nfrom influxdb_wrapper import influxdb_wrapper\nfrom
+    mt5_wrapper import mt5_wrapper\n\n# TODO\n# 設定ファイルからのロード\n# 認証\n# add tag to influxd
+    func\n# log\n\n\ndef main(settings :dict) -> None:\n    \"\"\"scheduleをセットし、MetaTrader5
+    からデータを取得し、influxdataに書き込む\n        Args:\n            settings : dict セッティングデータ\n
+    \       Returns:\n            None\n        Raises:\n        Notes:\n    \"\"\"\n
+    \   # 設定ファイルバリデーション\n    if settings['kind'] != \"mt5_uploader_config\" or settings['apiVersion']
+    != \"v0.1\":\n        print('kind or version error')\n        exit(1)\n    \n
+    \   settings = settings['data']\n    config = settings['CONFIG']\n    print(settings)\n\n
+    \   # 初期化\n    mt5wrap = mt5_wrapper()\n    infwrap = influxdb_wrapper(\n                    url
+    \    =  config['INFLUXDB_URL'],\n                    token   =  config['INFLUXDB_TOKEN'],\n
+    \                   org     =  config['INFLUXDB_ORG'],\n                    bucket
+    \ =  config['INFLUXDB_BUCKET'],\n                    )\n    # \n    for d in settings['GETDATA']:
+    \n        schedule.every(d['REPEAT']).seconds.do(\n                                make_thread,\n
+    \                               infwrap=infwrap,\n                                mt5wrap=mt5wrap,\n
+    \                               data=d\n                                )\n\n
+    \   while True:\n        schedule.run_pending()\n        sleep(1)\n\ndef make_thread(infwrap
+    :influxdb_wrapper,mt5wrap :mt5_wrapper,data :dict) -> None:\n    \"\"\"スケジュールタスクをマルチスレッド化する\n
+    \   \"\"\"\n    jt = threading.Thread(target=upload_task,args=(infwrap,mt5wrap,data))\n
+    \   jt.start()\n\ndef upload_task(infwrap :influxdb_wrapper,mt5wrap :mt5_wrapper,data
+    :dict) -> None:\n    \"\"\"mt5のデータをアップロードする\n    Args:\n        infwrap : class
+    influxdbのラッパ\n        mt5wrap : class mt5のラッパ\n        data    : dict  設定データ\n
+    \   Returns:\n        None\n    Raises:\n        TODO\n    Notes:\n    \"\"\"\n
+    \   \n    print(\"execute task\")\n    \n    symbol      = data[\"SYMBOL\"]            #
+    銘柄・通貨ペア\n    tag         = data[\"TAG\"]               # influxdbに設定するタグ,基本的にTimeframe\n
+    \   timeframe   = data[\"TIMEFRAME\"]         # 時間軸。\"tick\" or int or  任意の文字列\n
+    \   output      = None                      # outputデータ。\n    last        = infwrap.get_last_time(
+    \   # USDJPYの４時間足、最後のデータのタイムスタンプを取得\n                    measurement=symbol,\n
+    \                   timeframe=timeframe,\n                    )\n\n    # 末尾データのタイムスタンプが得られなければ現在時刻から1分前\n
+    \   if not last:\n        last = datetime.datetime.now(tz=tz.ƒettz('Asia/Tokyo'))-datetime.timedelta(minutes=1)\n\n
+    \   print(last)\n\n    # tickならばget_ticksを呼ぶ\n    if str(timeframe).lower() ==
+    \"tick\":\n        output = mt5wrap.get_ticks(\n                    symbol  =
+    symbol,\n                    start   = last,\n                    )\n        \n
+    \   # 上記以外ならば文字列から変数の値を引く\n    elif isinstance(mt5wrap.get_varofname(name=str(timeframe)),int):\n
+    \       timeframe = mt5wrap.get_varofname(name=str(timeframe))\n        output
+    = mt5wrap.get_bars(\n                    symbol  = symbol,\n                    tf
+    \     = timeframe,\n                    start   = last,\n                    )\n
+    \       \n    # 数値ならそのまま使う\n    elif isinstance(timeframe,int):\n        output
+    = mt5wrap.get_bars(\n                    symbol  = symbol,\n                    tf
+    \     = timeframe,\n                    start   = last,\n                    )\n
+    \   \n    else:\n        raise ValueError\n    \n    print(output)\n\n    if len(output)
+    != 0:\n        infwrap.write_dataframe(\n                        data        =
+    output,\n                        measurement = symbol,\n                        tag
+    \        = tag,\n                        )\n\n  \nif __name__ == \"__main__\":\n
+    \   if len(sys.argv) != 2:\n        print(\"Takes only one argument. Please specify
+    the config file\")\n        sys.exit(1)\n\n    settings={}\n\n    try:\n        with
+    open(sys.argv[1]) as file:\n            settings = yaml.safe_load(file)\n\n    except
+    Exception as e:\n        print('Exception occurred while loading YAML...', file=sys.stderr)\n
+    \       print(e, file=sys.stderr)\n        sys.exit(1)\n    \n    main(settings=settings)\n"
+  mt5_wrapper.py: "#from datetime import datetime\nimport datetime \nimport pandas
+    as pd\nfrom typing import Union\n\nimport MetaTrader5 as mt5\nfrom dateutil import
+    tz\n\n\nclass mt5_wrapper:\n   def __init__(self) -> None:\n      # TODO auth
+    \ ?\n      pass\n\n   def get_varname(self, var :int) -> str:\n      \"\"\"変数の値から変数名を引く\n
+    \     \"\"\"\n      for k, v in vars(mt5).items():\n         if var == v:\n            return
+    k\n      return None\n\n   def get_varofname(self, name :str) -> int:\n      \"\"\"名前から変数の値を引く\n
+    \     \"\"\"\n      for k, v in vars(mt5).items():\n         if name in k:\n            return
+    v\n\n   def get_ticks(self,symbol :str,start :datetime) -> pd.DataFrame:\n      \"\"\"mt5からティックデータを取得する\n
+    \     Args:\n         symbol : str 通貨ペア・銘柄\n         start  : class datetime  取得開始のタイムスタンプ\n
+    \     Return:\n         ticks  : pd.DataFrame タイムスタンプをインデックスに持ち、Bid,Ask,timecrame=Tickを絡むに持つ\n
+    \     Raise:\n      Notes:\n      \"\"\"\n      if not mt5.initialize():\n         print(\"initialize()
+    failed\")\n         mt5.shutdown()\n         return None\n      now = datetime.datetime.now(tz=tz.gettz('Asia/Tokyo'))\n
+    \     try:\n         ticks = pd.DataFrame(\n                     mt5.copy_ticks_range(\n
+    \                       symbol, \n                        start, \n                        now,
+    \n                        mt5.COPY_TICKS_ALL\n                     )\n                  )\n
+    \     except Exception as e:\n         print(e)\n         try:\n            ticks
+    = pd.DataFrame(\n                        mt5.copy_ticks_range(\n                           symbol,
+    \n                           now - datetime.timedelta(days=30), # 取得失敗したら現在時刻から時間を再指定\n
+    \                          now, \n                           mt5.COPY_TICKS_ALL\n
+    \                       )\n                    )\n         except Exception as
+    e:\n            print(e)\n            raise Exception\n      finally:\n         mt5.shutdown()\n
+    \     ticks['time_msc'] = pd.to_datetime(\n                              ticks['time_msc'],\n
+    \                             unit='ms',\n                              origin='unix'\n
+    \                             )\n      ticks = ticks.set_index('time_msc')\n      ticks
+    = ticks.drop(['time','last','volume','volume_real'],axis=1)\n      ticks.columns
+    = ['Bid','Ask','Flags']\n      ticks['Timeframe']='Tick'\n      return ticks\n\n
+    \  def get_bars(self,symbol: str,tf :Union[int,str], start :datetime) -> pd.DataFrame:
+    \     \n      \"\"\"MT5からロウソク足を取得する\n      Args:\n         symbol : str 銘柄・通貨ペア名\n
+    \        tf     : str or int 時間足情報。int(mt5の独自定義された定数)もしくは定数名を取る'H4'などと指定しても一応動く\n
+    \        start  : 取得期間の開始。　開始〜現在時刻までを取得\n      Return:\n         bars   : pd.Dataframe
+    タイムスタンプをインデックスとしたOHLC + Timeframe=tfカラムを含むデーターフレーム\n      Raise:\n      Notes:\n
+    \     \"\"\"\n      # TODO\n      # add column for describe datafame\n      if
+    not mt5.initialize():\n         print(\"initialize() failed\")\n         mt5.shutdown()\n
+    \        return None\n      now = datetime.datetime.now(tz=tz.gettz('Asia/Tokyo'))\n
+    \     try:\n         bars = pd.DataFrame(\n                     mt5.copy_rates_range(\n
+    \                             symbol, \n                              tf, \n                              start,
+    \n                              now, \n                     )\n                )\n
+    \     except Exception as e:\n         print(e)\n         try:\n            bars
+    = pd.DataFrame(\n                     mt5.copy_rates_range(\n                        symbol,
+    \n                        tf, \n                        now - datetime.timedelta(days=30),
+    # 取得失敗したら現在時刻から時間を再指定\n                        now, \n                        mt5.COPY_TICKS_ALL\n
+    \                    )\n                  )\n         except Exception as e:\n
+    \           print(e)\n            raise Exception\n      finally:\n         mt5.shutdown()\n\n
+    \     bars['time'] = pd.to_datetime(bars['time'],unit='s',origin='unix')\n      bars
+    = bars.set_index('time')\n      bars.columns = ['Open','High','Low','Close','Tick_olume','Spread','Real_volume']\n
+    \     bars['Timeframe']=self.get_varname(tf)\n      return bars\n\n"

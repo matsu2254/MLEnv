@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wine-mt5
+  namespace: mt5
+spec:
+  selector:
+    matchLabels:
+      app: mt5
+  serviceName: mt5
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mt5
+    spec:
+      containers:
+      - name: myapp
+        image: matsu2254/wine64-x11-novnc-docker:latest
+        ports:
+        - containerPort: 8080
+          name: novnc
+        volumeMounts:
+        - name: winepre
+          mountPath: /winepre
+        - name: supervisor-setting
+          mountPath: /etc/supervisor/conf.d
+        - name: code
+          mountPath: /CODE
+      volumes:
+        - name: supervisor-setting
+          configMap:
+            name: supervisor-setting
+        - name: code
+          configMap:
+            name: code-configmap
+  volumeClaimTemplates:
+  - metadata:
+      name: winepre
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "hostpath"
+      resources:
+        requests:
+          storage: 11Gi
+
+
