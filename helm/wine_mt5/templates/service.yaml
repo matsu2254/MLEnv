@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "wine_mt5.fullname" . }}
+  labels:
+    {{- include "wine_mt5.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: vnc
+      nodePort: {{ .Values.service.nodePort }}
+      protocol: TCP
+      name: vnc
+  selector:
+    {{- include "wine_mt5.selectorLabels" . | nindent 4 }}

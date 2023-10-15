@@ -35,7 +35,9 @@ data:
     SYMBOL: USDJPY
     TAG: Timeframe
     TIMEFRAME: TIMEFRAME_H4
+    GOBACK: days=60
   - REPEAT: 20
     SYMBOL: AUDJPY
     TAG: Timeframe
     TIMEFRAME: Tick
+    GOBACK: days=3

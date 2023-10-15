@@ -1,0 +1,16 @@
+kind: ConfigMap
+metadata:
+  name: '{{ .Chart.Name }}-code-configmap'
+apiVersion: v1
+data:
+{{ ($.Files.Glob "resources/code/*").AsConfig | indent 2 }}
+  config.yaml: |-
+    {{- toYaml .Values.config | nindent 4 }}
+
+---
+kind: ConfigMap
+metadata:
+  name: '{{ .Chart.Name }}-supervisor-setting'
+apiVersion: v1
+data:
+{{ ($.Files.Glob "resources/supervisor/*").AsConfig | indent 2 }}

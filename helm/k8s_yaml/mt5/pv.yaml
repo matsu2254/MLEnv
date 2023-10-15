@@ -11,4 +11,4 @@ spec:
   persistentVolumeReclaimPolicy: Recycle
   storageClassName: hostpath
   hostPath:
-    path: /smb/winedata/winepre
+    path: /smb/winedata/winepre2

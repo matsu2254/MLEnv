@@ -148,7 +148,7 @@ data:
     \   output      = None                      # outputデータ。\n    last        = infwrap.get_last_time(
     \   # USDJPYの４時間足、最後のデータのタイムスタンプを取得\n                    measurement=symbol,\n
     \                   timeframe=timeframe,\n                    )\n\n    # 末尾データのタイムスタンプが得られなければ現在時刻から1分前\n
-    \   if not last:\n        last = datetime.datetime.now(tz=tz.ƒettz('Asia/Tokyo'))-datetime.timedelta(minutes=1)\n\n
+    \   if not last:\n        last = datetime.datetime.now(tz=tz.gettz('Asia/Tokyo'))-datetime.timedelta(days=3)\n\n
     \   print(last)\n\n    # tickならばget_ticksを呼ぶ\n    if str(timeframe).lower() ==
     \"tick\":\n        output = mt5wrap.get_ticks(\n                    symbol  =
     symbol,\n                    start   = last,\n                    )\n        \n

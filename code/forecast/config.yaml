@@ -21,7 +21,7 @@
 # TIMEFRAME_MN1   49153
 
 apiVersion: v0.1
-kind: mt5_uploader_config
+kind: forecaster_config
 metadata:
   name: config_for...
 data:
@@ -31,12 +31,13 @@ data:
     INFLUXDB_TOKEN: 78mdMPrH02UaKsrsb6Q2Ofj0neRVfRNDaFfrN2RWqreobbh3RtP7jyKX9-Ktvt-JBAthd1FPnZggkRANHi9T8w==
     INFLUXDB_URL: http://192.168.0.15
   FORECAST:
-  - REPEAT: 3600
     SYMBOL: USDJPY
     TAG: Timeframe
     TIMEFRAME: TIMEFRAME_H4
-    PERIOD: 
-  - REPEAT: 3600
-    SYMBOL: AUDJPY
-    TAG: Timeframe
-    TIMEFRAME: Tick
+
+    HORIZON: 3
+    TIMECOL: _time
+    VALUECOL: High
+    FREQ: 4h
+    GOBACK: days=30
+    TYPE: ohlc

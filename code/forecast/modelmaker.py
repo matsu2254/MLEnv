@@ -1,12 +1,10 @@
 import sys
 import yaml
 import datetime
-import pandas as pd
-from time import sleep
+import math
 from dateutil import tz
 
 from influxdb_wrapper import influxdb_wrapper
-from collections import defaultdict
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -57,10 +55,10 @@ def main(settings :dict) -> None:
 
     # 諸々TODO
 
-    output = modelmaker(influxdb_wrapper=infwrap,config=data)
+    output = modelmaker(infwrap=infwrap,config=data)
     
     if not output:
-        sys.exit
+        sys.exit(1)
 
 
 def modelmaker(infwrap :influxdb_wrapper,config :dict) -> str:
@@ -68,47 +66,43 @@ def modelmaker(infwrap :influxdb_wrapper,config :dict) -> str:
     """予測藻モデルを書き出す
     """
 
-    HORIZON  = int() # forecast len, e.g. 3
-    TIMECOL  = str() # timestamp col, e.g. '_time'
-    VALUECOL = str() # value col, e.g. 'High'
-    FREQ     = str() # freq of data e.g. '4H'
+    HORIZON   = config['HORIZON']   # forecast len, e.g. 3
+    TIMECOL   = config['TIMECOL'  ] # timestamp col, e.g. '_time'
+    VALUECOL  = config['VALUECOL']  # value col, e.g. 'High'
+    FREQ      = config['FREQ']      # freq of data e.g. '4H'
+    GOBACK    = config['GOBACK']
 
+    SYMBOL    = config['SYMBOL']
+    TYPE      = config['TYPE']
+    TIMEFRAME = config['TIMEFRAME']
+
+    # 現在時刻を取得し、現在時刻から指定分遡る 
+    global start
+    stop  =  datetime.datetime.now(tz=tz.gettz('Asia/Tokyo'))
+    exec(f"global start; start = stop-datetime.timedelta({GOBACK})")    
+
+    forecaster_name = SYMBOL + '_forecaster_' + stop.strftime('%Y%m%dT%H%M')
+
+    df = infwrap.get_dataframe(
+                        measurement=SYMBOL.upper(),
+                        timeframe=TIMEFRAME,
+                        data_type=TYPE.lower(),
+                        start=int(math.floor(start.timestamp())), # 整数値unix time(少数切り捨て)
+                        stop=int(math.ceil(stop.timestamp()))     # （少数切り上げ）
+                        )
+    
     # specify dataset information
     metadata = MetadataParam(
-    time_col="_time",  # name of the time column ("date" in example above)
-    value_col="High",  # name of the value column ("sessions" in example above)
-    freq="4H"          # "H" for hourly, "D" for daily, "W" for weekly, etc.
-            # Any format accepted by `pandas.date_range`
-    )
+                    time_col=TIMECOL,  # name of the time column ("date" in example above)
+                    value_col=VALUECOL,  # name of the value column ("sessions" in example above)
+                    freq=FREQ          # "H" for hourly, "D" for daily, "W" for weekly, etc.
+                                        # Any format accepted by `pandas.date_range`
+                )
 
-    # いる？
-    tick = {
-        'Bid':'max',
-        'Ask':'min',   
-    }
-    d_ohlc = {
-        'Open': 'first',
-        'High': 'max',
-        'Low': 'min',
-        'Close': 'last'
-    }
-
-    # TODO change
-    start = datetime.datetime.now(tz=tz.gettz('Asia/Tokyo'))-datetime.timedelta(days=14)
-    
-    stop = datetime.datetime.now(tz=tz.gettz('Asia/Tokyo'))
-   
-
-    infwrap.get_last_time(measurement='AUDJPY',timeframe='Tick')
-    df = infwrap.get_dataframe(measurement='USDJPY',timeframe='TIMEFRAME_H4',data_type='ohlc',start='2022',stop='2023-10-04')
-    #df = infwrap.get_dataframe(measurement='AUDJPY',timeframe='Tick',data_type='tick',start='2022',stop='2023-10-04')
-    #df = df.resample('h').agg(tick).dropna()
+    # インデクスを列へ変更し、バグるのでタイムゾーンあったら消す
     df.reset_index(inplace=True)
-    # バグるのでタイムゾーンあったら消す
     df['_time'] = df['_time'].dt.tz_localize(None)
         
-
-
     forecaster = Forecaster()  # Creates forecasts and stores the result
 
     result = forecaster.run_forecast_config(  # result is also stored as `forecaster.forecast_result`.
@@ -124,13 +118,18 @@ def modelmaker(infwrap :influxdb_wrapper,config :dict) -> str:
         )
     
     forecaster.dump_forecast_result(
-                destination_dir='forecast_nodinfo',
+                destination_dir=forecaster_name,
                 object_name="forecast_object",
                 dump_design_info=False,
                 overwrite_exist_dir=False
         )
 
+    glob.glob(SYMBOL + "_forecaster_" + "[2-9][0-9][0-9][0-9][0-1][0-9][0-3][0-9]T[0-2][0-9][0-5][0-9]")[1].split('_')[-1]
 
+    import glob
+    sorted(glob.glob(SYMBOL + "_forecaster_" + "[0-9]+++++++T[0-9]+++"))
+
+    return forecaster_name
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -149,3 +148,4 @@ if __name__ == "__main__":
         sys.exit(1)
     
     main(settings=settings)
+
